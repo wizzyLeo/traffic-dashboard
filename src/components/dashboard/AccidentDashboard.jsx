@@ -111,7 +111,7 @@ const AccidentDashboard = () => {
         .keys(subgroups)
         (data);
 
-      stackedSvg.append("g")
+        stackedSvg.append("g")
         .selectAll("g")
         .data(stackedData)
         .join("g")
@@ -132,8 +132,8 @@ const AccidentDashboard = () => {
 
   return (
     <div className='flex flex-col items-center justify-between'>
-      <div id='accident-trend' className='shadow-lg p-6 rounded-2xl border-lsate-400' ref={accidentChartRef}></div>
-      <div id='drunk-trend' className='shadow-lg p-6 rounded-2xl border-lsate-400' ref={stackedChartRef}></div>
+      <div id='accident-trend' className='shadow-lg p-6 rounded-2xl border-lsate-400 min-w-[600px] min-h-[500px] flex items-center justify-center' ref={accidentChartRef}></div>
+      <div id='drunk-trend' className='shadow-lg p-6 rounded-2xl border-lsate-400 min-w-[600px] min-h-[500px] flex items-center justify-center' ref={stackedChartRef}></div>
     </div>
   );
 };

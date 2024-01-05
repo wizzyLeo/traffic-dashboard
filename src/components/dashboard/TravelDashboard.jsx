@@ -15,7 +15,7 @@ import { useEffect, useRef } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from '../ui/button'
-const TravelDashboard = ({onTravelSubmit}) => {
+const TravelDashboard = ({onTravelSubmit, directions}) => {
   const autoComplete1Ref = useRef()
   const input1Ref = useRef()
   const autoComplete21Ref = useRef()
@@ -53,7 +53,16 @@ const TravelDashboard = ({onTravelSubmit}) => {
         <Input className="rounded-[5px]" type="text" id="destination" onChange={(e)=>setDestination(e.target.value)} placeholder="Where do you want to go ?" ref={input2Ref} />
       </div>
       <Button className="bg-black rounded-[7.5px] text-white hover:bg-white hover:text-black hover:shadow-md hover:border-slate-400" onClick={handleSubmit} >Find out</Button>
-
+      {(directions.length > 0) && (
+        <div className="directions-container h-[400px] w-4/5 flex overflow-scroll ">
+          <div className="text-xl font-semibold">Directions:</div><br/>
+          <ol className="list-decimal list-inside rounded-xl border-slate-400">
+            {directions.map((step, index) => (
+              <li className='gap-2 rouded-xl shadown-md border-slate-400' key={index} dangerouslySetInnerHTML={{ __html: step }} />
+            ))}
+          </ol>
+        </div> 
+      )}
     </div>
   )
 }

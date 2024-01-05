@@ -2,7 +2,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Loader } from '@googlemaps/js-api-loader';
 
-const Map = ({ type, source, destination, heatmapData }) => {
+const Map = ({ type, source, destination, heatmapData, setDirections }) => {
     const mapRef = useRef(null);
 
     useEffect(() => {
@@ -81,20 +81,14 @@ const Map = ({ type, source, destination, heatmapData }) => {
             };
             directionsService.route(request, (result, status) => {
                 if (status === google.maps.DirectionsStatus.OK) {
-                    let currentRoute = result;
                     directionsDisplay.setDirections(result);
-                    var directionsResultDiv = document.getElementById("direction-box");
-                    directionsResultDiv.innerHTML = "";
-                    var directionsResultText = document.createElement("div");
-                    directionsResultText.innerHTML = "<strong>Directions:</strong>";
-                    directionsResultDiv.appendChild(directionsResultText);
-                    var steps = result.routes[0].legs[0].steps;
-                    for (var i = 0; i < steps.length; i++) {
-                        var stepText = document.createElement("div");
-                        stepText.innerHTML = "<div style='font-size: 0.9em'>" + steps[i].instructions + "</div>";
-                        directionsResultDiv.appendChild(stepText);
-                    }
-                    directionsDisplay.setDirections(result);
+        
+                    // Extracting the steps from the directions result
+                    const steps = result.routes[0].legs[0].steps;
+                    const directionSteps = steps.map(step => step.instructions);
+        
+                    // Use the setDirections prop to pass the steps back to the parent component
+                    setDirections(directionSteps);
                 } else {
                     console.error('Error fetching directions:', status);
                 }

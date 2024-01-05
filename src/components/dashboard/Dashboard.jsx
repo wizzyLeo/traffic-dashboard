@@ -30,28 +30,32 @@ const Dashboard = ({type}) => {
     // jam dashboard
     const [source, setSource] = useState("National Yangming Chiaotung University")
     const [destination, setDestination] = useState("Taipai 101")
+    const [directions, setDirections] = useState([])
     useEffect(()=>{
         console.log('type: ', type)
         console.log('source: ', source)
         console.log('destination: ', destination)
 
-    }, [source, destination])
+        console.log('directions', directions)
+
+    }, [source, destination, directions])
     const onTravelSubmit = (source, destination) => {
         setSource(source)
         setDestination(destination)
     }
   return (
-    <div className='w-screen grid grid-cols-2 h-[900px] p-4'>
-        <div className='flex items-center justify-center p-6'>
+    <div className={`w-screen grid  ${type==='jam'?'grid-cols-1' : 'grid-cols-2'} h-[900px] p-4`}>
+        {(type !== 'jam') && <div className='flex items-center justify-center p-6'>
             {(type === 'accident') && <AccidentDashboard/>}
             {(type === 'jam') && <JamDashboard
                                 />}
             {(type === 'travel') && <TravelDashboard
                                     onTravelSubmit={onTravelSubmit}
+                                    directions={directions}
                                 />}
-        </div>
+        </div>}
         <div className='flex items-center justify-center p-6'>
-            <Map type={type} source={source} destination={destination} heatmapData={heatmapData}/>
+            <Map type={type} source={source} destination={destination} heatmapData={heatmapData} setDirections={setDirections}/>
         </div>
     </div>
   )

@@ -9,26 +9,19 @@ const Map = ({ type, source, destination, heatmapData }) => {
         let map;
         let directionsService;
         let directionsDisplay;
-        
-        let libraries = ['places'];
-        if (type === 'accident' || type === 'jam') {
-            libraries.push('visualization');
-        }
-        if (type === 'jam') {
-            libraries.push('geometry', 'drawing');
-        }
+
         const loader = new Loader({
-            apiKey: `AIzaSyBGFyvqp623RCbrcPXoF43O_nFt3XHPeM0`, // Replace with your API key
+            apiKey: 'AIzaSyBGFyvqp623RCbrcPXoF43O_nFt3XHPeM0',
             version: 'weekly',
-            libraries: ["places","visualization","geometry","drawing"]
-        });
+            libraries:['geometry', 'geocoding', 'drawing', 'places', 'visualization', 'routes']
+        })
 
         async function initMap() {
             try {
                 await loader.load();
                 map = new google.maps.Map(mapRef.current, {
                     center: { lat: 25.0341, lng: 121.5640 },
-                    zoom: 10,
+                    zoom: 12,
                     styles: [
                         // Custom map styles here
                         // Example:
@@ -67,19 +60,20 @@ const Map = ({ type, source, destination, heatmapData }) => {
                 }
 
                 if (type === 'travel' && source && destination) {
-                    directionsService = new google.maps.DirectionsService();
-                    directionsDisplay = new google.maps.DirectionsRenderer();
+                    directionsService = new window.google.maps.DirectionsService();
+                    directionsDisplay = new window.google.maps.DirectionsRenderer();
                     directionsDisplay.setMap(map);
                     let transitLayer = new google.maps.TransitLayer()
                     transitLayer.setMap(map)
-                    getDirections();
+                    let service = new google.maps.DistanceMatrixService();
+                    getDirections(source, destination);
                 }
             } catch (error) {
                 console.error('Error loading Google Maps:', error);
             }
         }
 
-        const getDirections = () => {
+        const getDirections = (source, destination) => {
             const request = {
                 origin: source,
                 destination: destination,
@@ -87,6 +81,19 @@ const Map = ({ type, source, destination, heatmapData }) => {
             };
             directionsService.route(request, (result, status) => {
                 if (status === google.maps.DirectionsStatus.OK) {
+                    let currentRoute = result;
+                    directionsDisplay.setDirections(result);
+                    var directionsResultDiv = document.getElementById("direction-box");
+                    directionsResultDiv.innerHTML = "";
+                    var directionsResultText = document.createElement("div");
+                    directionsResultText.innerHTML = "<strong>Directions:</strong>";
+                    directionsResultDiv.appendChild(directionsResultText);
+                    var steps = result.routes[0].legs[0].steps;
+                    for (var i = 0; i < steps.length; i++) {
+                        var stepText = document.createElement("div");
+                        stepText.innerHTML = "<div style='font-size: 0.9em'>" + steps[i].instructions + "</div>";
+                        directionsResultDiv.appendChild(stepText);
+                    }
                     directionsDisplay.setDirections(result);
                 } else {
                     console.error('Error fetching directions:', status);
@@ -103,6 +110,7 @@ const Map = ({ type, source, destination, heatmapData }) => {
 
     return (
         <div ref={mapRef} className="w-full h-full rounded-xl"></div>
+        
     );
 };
 

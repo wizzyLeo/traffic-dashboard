@@ -1,101 +1,141 @@
-import React, { useEffect, useRef } from 'react'
-
-import * as d3 from 'd3'
-
-
+import React, { useEffect, useRef } from 'react';
+import * as d3 from 'd3';
 
 const AccidentDashboard = () => {
-  useEffect(()=>{
-    if (!chartRef.current) {
-      // Exit if ref is not set
-      return;
-    }
+  const accidentChartRef = useRef(null);
+  const stackedChartRef = useRef(null);
 
+  useEffect(() => {
+    // URLs for the CSV files
     const csvFilePath = '/data/transformed_accident_data.csv';
-    // set the dimensions and margins of the graph
-    const margin = {top: 10, right: 30, bottom: 30, left: 20},
-        width = 600 - margin.left - margin.right,
-        height = 400 - margin.top - margin.bottom;
+    const drunkFilePath = '/data/yearly_drunk_driving_statistics.csv';
 
-    // Check if svg already exists
-    let svg = d3.select(chartRef.current).select("svg");
-    if (svg.empty()) {
-      svg = d3.select(chartRef.current)
+    // Dimensions for the line chart
+    const margin = { top: 10, right: 30, bottom: 30, left: 20 },
+      width = 600 - margin.left - margin.right,
+      height = 400 - margin.top - margin.bottom;
+
+    // Create the line chart SVG
+    let lineSvg = d3.select(accidentChartRef.current).select("svg");
+    if (lineSvg.empty()) {
+      lineSvg = d3.select(accidentChartRef.current)
         .append("svg")
-          .attr("width", width + margin.left + margin.right)
-          .attr("height", height + margin.top + margin.bottom)
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
         .append("g")
-          .attr("transform", `translate(${margin.left},${margin.top})`);
+        .attr("transform", `translate(${margin.left},${margin.top})`);
     } else {
-      // Clear existing content
-      svg.selectAll("*").remove();
+      lineSvg.selectAll("*").remove();
     }
 
-    //Read the data
-    d3.csv(csvFilePath,
+    // Read and plot the data for the line chart
+    d3.csv(csvFilePath, function (d) {
+      return { date: d3.timeParse("%Y-%m-%d")(d.date), value: +d.value };
+    }).then(function (data) {
+      const x = d3.scaleTime()
+        .domain(d3.extent(data, function (d) { return d.date; }))
+        .range([0, width]);
+      lineSvg.append("g")
+        .attr("transform", `translate(0, ${height})`)
+        .call(d3.axisBottom(x));
 
-    // When reading the csv, I must format variables:
-    function(d){
-      return { date : d3.timeParse("%Y-%m-%d")(d.date), value : +d.value }
-    }).then(
+      const max = d3.max(data, function (d) { return +d.value; });
 
-      // Now I can use this dataset:
-      function(data) {
+      const y = d3.scaleLinear()
+        .domain([0, max])
+        .range([height, 0]);
+      lineSvg.append("g")
+        .call(d3.axisLeft(y));
 
-        // Add X axis --> it is a date format
-        const x = d3.scaleTime()
-          .domain(d3.extent(data, function(d) { return d.date; }))
-          .range([ 0, width ]);
-        svg.append("g")
-          .attr("transform", `translate(0, ${height})`)
-          .call(d3.axisBottom(x));
+      lineSvg.append("path")
+        .datum(data)
+        .attr("fill", "none")
+        .attr("stroke", "steelblue")
+        .attr("stroke-width", 1.5)
+        .attr("d", d3.line()
+          .x(function (d) { return x(d.date); })
+          .y(function (d) { return y(d.value); })
+        );
+    });
 
-        // Max value observed:
-        const max = d3.max(data, function(d) { return +d.value; })
+    // Dimensions for the stacked bar chart
+    const margin2 = { top: 10, right: 30, bottom: 30, left: 50 },
+      width2 = 600 - margin2.left - margin2.right,
+      height2 = 400 - margin2.top - margin2.bottom;
 
-        // Add Y axis
-        const y = d3.scaleLinear()
-          .domain([0, max])
-          .range([ height, 0 ]);
-        svg.append("g")
-          .call(d3.axisLeft(y));
+    // Create the stacked bar chart SVG
+    let stackedSvg = d3.select(stackedChartRef.current).select("svg");
+    if (stackedSvg.empty()) {
+      stackedSvg = d3.select(stackedChartRef.current)
+        .append("svg")
+        .attr("width", width2 + margin2.left + margin2.right)
+        .attr("height", height2 + margin2.top + margin2.bottom)
+        .append("g")
+        .attr("transform", `translate(${margin2.left},${margin2.top})`);
+    } else {
+      stackedSvg.selectAll("*").remove();
+    }
 
-        // Set the gradient
-        svg.append("linearGradient")
-          .attr("id", "line-gradient")
-          .attr("gradientUnits", "userSpaceOnUse")
-          .attr("x1", 0)
-          .attr("y1", y(0))
-          .attr("x2", 0)
-          .attr("y2", y(max))
-          .selectAll("stop")
-            .data([
-              {offset: "0%", color: "blue"},
-              {offset: "100%", color: "red"}
-            ])
-          .enter().append("stop")
-            .attr("offset", function(d) { return d.offset; })
-            .attr("stop-color", function(d) { return d.color; });
+    // Read and plot the data for the stacked bar chart
+    d3.csv(drunkFilePath).then(function (data) {
+      console.log("Loaded data:", data)
 
-        // Add the line
-        svg.append("path")
-          .datum(data)
-          .attr("fill", "none")
-          .attr("stroke", "url(#line-gradient)" )
-          .attr("stroke-width", 2)
-          .attr("d", d3.line()
-            .x(function(d) { return x(d.date) })
-            .y(function(d) { return y(d.value) })
-            )
 
-      })
-  }, [])
-  const chartRef = useRef(null)
+      const subgroups = data.columns.slice(1);
+      console.log("Subgroup data:", subgroups)
+      const groups = data.map(d => d.Year);
+      console.log("Groups:", groups)
+
+
+
+      const x = d3.scaleBand()
+        .domain(groups)
+        .range([0, width2])
+        .padding([0.2]);
+      stackedSvg.append("g")
+        .attr("transform", `translate(0, ${height2})`)
+        .call(d3.axisBottom(x).tickSizeOuter(0));
+
+      const maxY = d3.max(data, d => +d.Deaths + +d.Injuries);
+      const y = d3.scaleLinear()
+        .domain([0, maxY])
+        .range([height2, 0]);
+      stackedSvg.append("g")
+        .call(d3.axisLeft(y));
+
+      const color = d3.scaleOrdinal()
+        .domain(subgroups)
+        .range(['#e41a1c', '#ff7f00']);
+
+      const stackedData = d3.stack()
+        .keys(subgroups)
+        (data);
+
+      stackedSvg.append("g")
+        .selectAll("g")
+        .data(stackedData)
+        .join("g")
+        .attr("fill", d => color(d.key))
+        .selectAll("rect")
+        .data(d => d)
+        .join("rect")
+        .attr("x", d => x(d.data.Year))
+        .attr("y", height2) // Start from the bottom of the chart
+        .attr("width", x.bandwidth())
+        .transition() // Apply a transition
+        .duration(800) // Duration of the animation in milliseconds
+        .delay((d, i) => i * 50) // Delay for each bar, increasing from left to right
+        .attr("y", d => y(d[1])) // Animate to the final y position
+        .attr("height", d => y(d[0]) - y(d[1])); // Animate to the final height
+    });
+  }, []);
+
   return (
     <div className='flex flex-col items-center justify-between'>
-      <div id='accident-trend' className='shadow-lg p-6 rounded-2xl border-lsate-400' ref={chartRef}></div>
+      <div id='accident-trend' className='shadow-lg p-6 rounded-2xl border-lsate-400' ref={accidentChartRef}></div>
+      <div id='drunk-trend' className='shadow-lg p-6 rounded-2xl border-lsate-400' ref={stackedChartRef}></div>
     </div>
-  )
-}
+  );
+};
 
-export default AccidentDashboard
+export default AccidentDashboard;

@@ -61,7 +61,7 @@ const MenuBar = ({onTypeSelect}) => {
                     menuItems.map((item, index)=>{
                         return (
                             <li 
-                                className={`py-2 px-3 ${index==0 && "border-l border-slate-300"}`} 
+                                className={`py-2 px-3 hover:text-slate-500 transition-colors ${index==0 && "border-l border-slate-300"}`} 
                                 key={item.name}
                                 onClick={() => {
                                     handleMenuItemClick(item.name)

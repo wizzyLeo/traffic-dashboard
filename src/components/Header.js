@@ -1,7 +1,6 @@
 'use client';
 import React, {useState} from 'react';
 import Image from 'next/image'
-import { UserButton } from '@clerk/nextjs'
 import Link from 'next/link'
 
 const Header = ({isMainPage}) => {
@@ -19,9 +18,6 @@ const Header = ({isMainPage}) => {
             <Link href="/main/map" className={`${!isDashboard && "border-b-2"}`} onClick={()=>(setIsDashboard(false))}>map</Link>
           </div>
         )}
-        <div>
-          <UserButton afterSignOutUrl="/main"/>
-        </div>
         
         
     </div>
